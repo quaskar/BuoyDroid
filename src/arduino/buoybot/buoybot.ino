@@ -45,7 +45,28 @@ void fillBroadcastBuffer()
 }
 
 /* **************************************************************** */ 
+void print_help() {
+  Serial.println("BuoyBot command help:");
+  Serial.println("");
+  
+  Serial.println("Get value operations:");
+  Serial.println(" GS      Get current speed value");
+  Serial.println(" GC      Get current compass value");
+  Serial.println(" TS      Get set target speed value");
+  Serial.println(" TC      Get set target compass value");
+  Serial.println("");
+  
+  Serial.println("Set value operations:");
+  Serial.println(" SS      Set set target speed value");
+  Serial.println(" SC      Set set target compass value");
+}
+
+/* **************************************************************** */ 
 void parse_commandLine(String line) {
+
+  if (line[0] == '?') {
+    print_help();
+  }
 
   // get operations
   if (line[0] == 'G') {
