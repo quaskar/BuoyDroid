@@ -19,6 +19,11 @@
 
 #include "config.h"
 
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 0
+#define VERSION_PATCH 1
+
+
 
 /* **************************************************************** */
 /* * Global Variables                                             * */
@@ -45,8 +50,20 @@ void fillBroadcastBuffer()
 }
 
 /* **************************************************************** */ 
+void print_version() {
+  Serial.print("BuoyBot v");
+  Serial.print(str(VERSION_MAJOR));
+  Serial.print(".");
+  Serial.print(str(VERSION_MINOR));
+  Serial.print(".");
+  Serial.println(str(VERSION_PATCH));
+
+}
+
+/* **************************************************************** */ 
 void print_help() {
-  Serial.println("BuoyBot command help:");
+  print_version();
+  Serial.println("Command reference:");
   Serial.println("");
   
   Serial.println("Get value operations:");
