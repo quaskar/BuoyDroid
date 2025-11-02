@@ -23,3 +23,5 @@
 #define PIN_WINCH_N1            12
 #define PIN_WINCH_N2            13
 #define PIN_CURRENT_MEASURMENT  A3
+#define PIN_STB_ESC             5
+#define PIN_BB_ESC              6

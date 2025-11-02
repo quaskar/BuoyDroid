@@ -14,9 +14,9 @@
 #include "serial.h"
 //#include "wifi.h"
 #include "compass.h"
-#include "esc.h"
 #include <PID_v1.h>
 #include "winch.h"
+#include "engine.h"
 
 #include "config.h"
 
@@ -31,13 +31,11 @@
 /* **************************************************************** */ 
 char broadcastBuffer[256];
 
-double Compass_Target = 0.0;
-double Speed_Target = 0.0;
-
 double Ctrl_Speed = 0.0;
 double Ctrl_YawRate = 0.0;
 
-Winch winch;
+WinchCtrl Winch;
+EngineCtrl Engine;
 
 
 
@@ -51,7 +49,7 @@ Winch winch;
 /* **************************************************************** */ 
 void fillBroadcastBuffer()
 {
-  sprintf(broadcastBuffer, "c:%d;y:%f\ntc%d", (int)Compass_Value, Ctrl_YawRate, (int)Compass_Target);
+  //sprintf(broadcastBuffer, "c:%d;y:%f\ntc%d", (int)Compass_Value, Ctrl_YawRate, (int)Compass_Target);
 }
 
 /* **************************************************************** */ 
@@ -72,27 +70,8 @@ void print_help() {
   Serial.println("");
 
   /* sub module help text */
-  winch.debug_help();
-
-  Serial.println("Turbine operations:");
-  Serial.println(" TG      Motor get speed");
-  Serial.println(" T+      Motor inc. speed (by 5)");
-  Serial.println(" T-      Motor deinc. speed (by 5)");
-  Serial.println("");
-  
-  Serial.println("Compass operations:");
-  Serial.println(" CG      Compass get value");
-
-  Serial.println("Get value operations:");
-  Serial.println(" GS      Get current speed value");
-  Serial.println(" GC      Get current compass value");
-  Serial.println(" TS      Get set target speed value");
-  Serial.println(" TC      Get set target compass value");
-  Serial.println("");
-  
-  Serial.println("Set value operations:");
-  Serial.println(" SS      Set set target speed value");
-  Serial.println(" SC      Set set target compass value");
+  Winch.debug_help();
+  Engine.debug_help();
 }
 
 /* **************************************************************** */ 
@@ -103,53 +82,8 @@ void parse_commandLine(String line) {
   }
 
   // sub module debug ctrls
-  winch.debug_exec(line);
-  
-
-  // compass operations
-  if (line[0] == 'C') {
-    if (line[1] == 'G') {
-      Serial.println(Compass_Value);
-    }
-  }
-
-  // get operations
-  if (line[0] == 'G') {
-    if (line[1] == 'S' || line[1] == 'A') {        // get speed
-      Serial.print("GS");
-      Serial.println(Ctrl_Speed);
-    }
-    if (line[1] == 'C' || line[1] == 'A') {       // get compass
-      Serial.print("GC");
-      Serial.println(Compass_Value);
-    }
-  }
-
-  // get target operations
-  if (line[0] == 'T') {
-    if (line[1] == 'S' || line[1] == 'A') {       // get target speed
-      Serial.print("TS");
-      Serial.println(Speed_Target);
-    }
-    if (line[1] == 'C' || line[1] == 'A') {       // set target compass
-      Serial.print("TC");
-      Serial.println(Compass_Target);
-    }
-  }
-          
-  // set target operations
-  if (line[0] == 'S') {
-    if (line[1] == 'S') {                         // set target speed
-      Speed_Target = line.substring(2).toDouble();
-      Serial.print("SS");
-      Serial.println(Speed_Target);
-    }
-    else if (line[1] == 'C') {                    // set target compass
-      Compass_Target = line.substring(2).toDouble();
-      Serial.print("SC");
-      Serial.println(Compass_Target);
-    }
-  }
+  Winch.debug_exec(line);
+  Engine.debug_exec(line);
 }
 
 
@@ -161,12 +95,7 @@ void setup() {
   Serial_setup(SERIAL_BAUDRATE);
   //Wifi_setup(SECRET_SSID, SECRET_PASS);
   Compass_setup();
-  Esc_setup();
-  winch.loop();
-
-  // motor
-  //myMotor.setSpeed(255);
-  //myMotor.forward();
+  Engine.setup();
 
   //PID_Rotation.SetMode(AUTOMATIC);
   //PID_Rotation.SetOutputLimits(-PID_ROTATION_LIMIT, PID_ROTATION_LIMIT);
@@ -181,19 +110,17 @@ void setup() {
 /* **************************************************************** */ 
 void loop() {
   Compass_loop();
-  //Serial.print("Current:");
-  //Serial.print(analogRead(A3));
-  //Serial.print(",");
-  //Serial.print("Compass:");
-  //Serial.println(Compass_Value);
   //PID_Rotation.Compute();
   //PID_Speed.Compute();
-  Esc_loop(Speed_Target, 0);
+  
+  //Esc_loop(Speed_Target, 0);
+  Winch.loop();
+  Engine.loop();
 
   //Wifi_loop();
   Serial_loop();
 
-  fillBroadcastBuffer();
+  //fillBroadcastBuffer();
   //Wifi_sendLine(broadcastBuffer);
   //Serial_sendLine(broadcastBuffer);  
 

@@ -6,11 +6,11 @@
 
 #define VOLTAGE_PER_AMPER 185
 
-class Winch
+class WinchCtrl
 {
   public:
   /* Constructor with config.h settings */
-  Winch ()
+  WinchCtrl ()
   {
     
     Winch_Motor.stop();
@@ -64,37 +64,37 @@ class Winch
   void debug_help()
   {
     Serial.println("Winch ctrl");
-    Serial.println(" WS      Winch stop");
-    Serial.println(" WU      Winch up");
-    Serial.println(" WD      Winch down");
-    Serial.println(" WC      Winch current");
-    Serial.println(" WR      Winch raw current");
+    Serial.println(" ws      Winch stop");
+    Serial.println(" wu      Winch up");
+    Serial.println(" wd      Winch down");
+    Serial.println(" wc      Winch current");
+    Serial.println(" wr      Winch raw current");
 
     Serial.println("");
   };
 
   void debug_exec(String line)
   {
-    if (line[0] == 'W') {
-      if (line[1] == 'S') {
+    if (line[0] == 'w') {
+      if (line[1] == 's') {
         stop();
       }
 
-      if (line[1] == 'U') {
+      if (line[1] == 'u') {
         up();
       }
 
-      if (line[1] == 'D') {
+      if (line[1] == 'd') {
         down();
       }
 
-      if (line[1] == 'C') {
+      if (line[1] == 'c') {
         Serial.print("Winch-Current: ");
         Serial.print(current());
         Serial.println("mA");
       }
 
-      if (line[1] == 'R') {
+      if (line[1] == 'r') {
         Serial.print("Winch-Current (raw): ");
         Serial.println(current_raw());
       }
