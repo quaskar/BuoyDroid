@@ -12,10 +12,11 @@
  */
 
 #include "serial.h"
-#include "wifi.h"
+//#include "wifi.h"
 #include "compass.h"
 #include "esc.h"
 #include <PID_v1.h>
+#include "winch.h"
 
 #include "config.h"
 
@@ -36,8 +37,12 @@ double Speed_Target = 0.0;
 double Ctrl_Speed = 0.0;
 double Ctrl_YawRate = 0.0;
 
+Winch winch;
+
+
+
 // PID controller
-PID PID_Rotation(&Compass_Value, &Ctrl_YawRate, &Compass_Target, PID_ROTATION_KP, PID_ROTATION_KI, PID_ROTATION_KD, DIRECT);
+//PID PID_Rotation(&Compass_Value, &Ctrl_YawRate, &Compass_Target, PID_ROTATION_KP, PID_ROTATION_KI, PID_ROTATION_KD, DIRECT);
 //PID PID_Speed(&Speed_Value, &Speed_Value, &Speed_Target,PID_SPEED_KP, PID_SPEED_KI, PID_SPEED_KD, DIRECT);
 
 
@@ -52,11 +57,11 @@ void fillBroadcastBuffer()
 /* **************************************************************** */ 
 void print_version() {
   Serial.print("BuoyBot v");
-  Serial.print(str(VERSION_MAJOR));
+  Serial.print(String(VERSION_MAJOR));
   Serial.print(".");
-  Serial.print(str(VERSION_MINOR));
+  Serial.print(String(VERSION_MINOR));
   Serial.print(".");
-  Serial.println(str(VERSION_PATCH));
+  Serial.println(String(VERSION_PATCH));
 
 }
 
@@ -65,7 +70,19 @@ void print_help() {
   print_version();
   Serial.println("Command reference:");
   Serial.println("");
+
+  /* sub module help text */
+  winch.debug_help();
+
+  Serial.println("Turbine operations:");
+  Serial.println(" TG      Motor get speed");
+  Serial.println(" T+      Motor inc. speed (by 5)");
+  Serial.println(" T-      Motor deinc. speed (by 5)");
+  Serial.println("");
   
+  Serial.println("Compass operations:");
+  Serial.println(" CG      Compass get value");
+
   Serial.println("Get value operations:");
   Serial.println(" GS      Get current speed value");
   Serial.println(" GC      Get current compass value");
@@ -83,6 +100,17 @@ void parse_commandLine(String line) {
 
   if (line[0] == '?') {
     print_help();
+  }
+
+  // sub module debug ctrls
+  winch.debug_exec(line);
+  
+
+  // compass operations
+  if (line[0] == 'C') {
+    if (line[1] == 'G') {
+      Serial.println(Compass_Value);
+    }
   }
 
   // get operations
@@ -131,12 +159,17 @@ void parse_commandLine(String line) {
 void setup() {
 
   Serial_setup(SERIAL_BAUDRATE);
-  Wifi_setup(SECRET_SSID, SECRET_PASS);
+  //Wifi_setup(SECRET_SSID, SECRET_PASS);
   Compass_setup();
   Esc_setup();
+  winch.loop();
 
-  PID_Rotation.SetMode(AUTOMATIC);
-  PID_Rotation.SetOutputLimits(-PID_ROTATION_LIMIT, PID_ROTATION_LIMIT);
+  // motor
+  //myMotor.setSpeed(255);
+  //myMotor.forward();
+
+  //PID_Rotation.SetMode(AUTOMATIC);
+  //PID_Rotation.SetOutputLimits(-PID_ROTATION_LIMIT, PID_ROTATION_LIMIT);
 
   //PID_Speed.SetMode(AUTOMATIC);
   //PID_Speed.SetOutputLimits(-PID_SPEED_LIMIT, PID_SPEED_LIMIT);
@@ -148,11 +181,16 @@ void setup() {
 /* **************************************************************** */ 
 void loop() {
   Compass_loop();
-  PID_Rotation.Compute();
+  //Serial.print("Current:");
+  //Serial.print(analogRead(A3));
+  //Serial.print(",");
+  //Serial.print("Compass:");
+  //Serial.println(Compass_Value);
+  //PID_Rotation.Compute();
   //PID_Speed.Compute();
-  Esc_loop(Speed_Target, Ctrl_YawRate);
+  Esc_loop(Speed_Target, 0);
 
-  Wifi_loop();
+  //Wifi_loop();
   Serial_loop();
 
   fillBroadcastBuffer();

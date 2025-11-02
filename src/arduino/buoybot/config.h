@@ -16,3 +16,9 @@
 #define PID_SPEED_KI        5
 #define PID_SPEED_KD        1
 #define PID_SPEED_LIMIT     85
+
+
+/* Pin Config */
+#define PIN_WINCH_EN        11
+#define PIN_WINCH_N1        12
+#define PIN_WINCH_N2        13
