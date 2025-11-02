@@ -19,6 +19,7 @@
 
 
 /* Pin Config */
-#define PIN_WINCH_EN        11
-#define PIN_WINCH_N1        12
-#define PIN_WINCH_N2        13
+#define PIN_WINCH_EN            11
+#define PIN_WINCH_N1            12
+#define PIN_WINCH_N2            13
+#define PIN_CURRENT_MEASURMENT  A3
