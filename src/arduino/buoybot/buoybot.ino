@@ -13,7 +13,6 @@
 
 #include "serial.h"
 //#include "wifi.h"
-#include "compass.h"
 #include <PID_v1.h>
 #include "winch.h"
 #include "engine.h"
@@ -94,7 +93,6 @@ void setup() {
 
   Serial_setup(SERIAL_BAUDRATE);
   //Wifi_setup(SECRET_SSID, SECRET_PASS);
-  Compass_setup();
   Engine.setup();
 
   //PID_Rotation.SetMode(AUTOMATIC);
@@ -109,11 +107,8 @@ void setup() {
 /* * Loop Routine                                                 * */
 /* **************************************************************** */ 
 void loop() {
-  Compass_loop();
   //PID_Rotation.Compute();
   //PID_Speed.Compute();
-  
-  //Esc_loop(Speed_Target, 0);
   Winch.loop();
   Engine.loop();
 

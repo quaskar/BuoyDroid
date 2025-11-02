@@ -25,3 +25,12 @@
 #define PIN_CURRENT_MEASURMENT  A3
 #define PIN_STB_ESC             5
 #define PIN_BB_ESC              6
+
+
+/* Compass Calibration */
+#define COMPASS_OFFSET_X        -20
+#define COMPASS_OFFSET_Y        -996
+#define COMPASS_OFFSET_Z        -1179
+#define COMPASS_SCALE_X         0.92
+#define COMPASS_SCALE_Y         0.81
+#define COMPASS_SCALE_Z         1.47
