@@ -3,11 +3,25 @@
 
 #include <Servo.h>
 #include <QMC5883LCompass.h>
+#include <PID_v1.h>
 #include "config.h"
 
 #define ESC_MIN_MICROSEC    1000
 #define ESC_MAX_MICROSEC    2001
 #define ESC_MID_MICROSEC    (ESC_MAX_MICROSEC-ESC_MIN_MICROSEC) / 2 + ESC_MIN_MICROSEC
+
+
+double compass_value  = 0.0;
+double compass_target = 0.0;
+double yawrate_set    = 0.0;
+
+double speed_value    = 0.0;
+double speed_target   = 0.0;
+double speed_set      = 0.0;
+
+PID    PID_Rotation(&compass_value, &yawrate_set, &compass_target, 0.0, 0.0, 0.0, 0);
+PID    PID_Speed(&speed_set, &speed_set, &speed_target, 0.0, 0.0, 0.0, 0);
+
 
 class EngineCtrl
 {
@@ -20,23 +34,55 @@ class EngineCtrl
 
   void setup ()
   {
+    /* ESC initializations */
     Esc_Bb.attach  (PIN_STB_ESC, ESC_MIN_MICROSEC, ESC_MAX_MICROSEC);
     Esc_Stb.attach (PIN_BB_ESC,  ESC_MIN_MICROSEC, ESC_MAX_MICROSEC);
-
     calibrate();
 
+    /* Compass initialization */
     Compass.init();
     Compass.setCalibrationOffsets(COMPASS_OFFSET_X, COMPASS_OFFSET_Y, COMPASS_OFFSET_Z);
     Compass.setCalibrationScales(COMPASS_SCALE_X, COMPASS_SCALE_Y, COMPASS_SCALE_Z);
 
-    target_yaw   = 0.0;
-    target_speed = 0.0;
+    /* Rotation PID controller */
+    PID_Rotation.SetMode(AUTOMATIC);
+    PID_Rotation.SetOutputLimits(-PID_ROTATION_LIMIT, PID_ROTATION_LIMIT);
+    PID_Rotation.SetTunings(PID_ROTATION_KP, PID_ROTATION_KI, PID_ROTATION_KD);
+    PID_Rotation.SetControllerDirection(PID_ROTATION_DIRECTION);
+
+    /* Speed PID controller */
+    PID_Speed.SetMode(AUTOMATIC);
+    PID_Speed.SetOutputLimits(-PID_SPEED_LIMIT, PID_SPEED_LIMIT);
+    PID_Speed.SetTunings(PID_SPEED_KP, PID_SPEED_KI, PID_SPEED_KD);
+    PID_Speed.SetControllerDirection(PID_SPEED_DIRECTION);
+    
+    compass_target  = 0.0;
+    speed_target    = 0.0;
   }
 
   /* loop */
   void loop()
   {
+    Compass.read();
+    compass_value = (double)Compass.getAzimuth();
+
+    PID_Rotation.Compute();
+    PID_Speed.Compute();
+    speed_value = speed_set;
+
+    int v_Bb = map(speed_set + yawrate_set, -ESC_BB_DIRECTION*100, ESC_BB_DIRECTION*100, ESC_MIN_MICROSEC, ESC_MAX_MICROSEC);
+    int v_Stb = map(speed_set - yawrate_set, -ESC_STB_DIRECTION*100, ESC_STB_DIRECTION*100, ESC_MIN_MICROSEC, ESC_MAX_MICROSEC);
+    Esc_Bb.writeMicroseconds  (v_Bb);
+    Esc_Stb.writeMicroseconds  (v_Stb);
   };
+
+  double getSpeed() {return speed_value; };
+  double getSpeedTarget() {return speed_target; };
+  double getSpeedSet() {return speed_set; };
+
+  double getCompass() {return compass_value; };
+  double getCompassTarget() {return compass_target; };
+  double getYawRateSet() {return yawrate_set; };
 
 
   /* **************************************************************** */
@@ -47,7 +93,7 @@ class EngineCtrl
     Serial.println("Engine ctrl");
     Serial.println(" es         Engine stop");
     Serial.println(" ess<speed> Engine set speed [-100;+100] 0=stopped");
-    Serial.println(" esy<yaw>   Engine set yaw rate");
+    Serial.println(" esc<yaw>   Engine set yaw rate");
     Serial.println("");
 
     Serial.println("Compass ctrl");
@@ -63,37 +109,38 @@ class EngineCtrl
           int value = line.substring(3).toDouble();
           value = max(value, -100);
           value = min(value, 100);
-          value = map(value, -100, 100, ESC_MIN_MICROSEC, ESC_MAX_MICROSEC);
-
-          Esc_Bb.writeMicroseconds  (value);
-          Esc_Stb.writeMicroseconds  (value);
-
-          Serial.print("Set speed: ");
-          Serial.print(Esc_Stb.readMicroseconds());
-          Serial.print(";");
-          Serial.print(Esc_Bb.readMicroseconds());
-          loop();
+          speed_target = value;
         }
-        else if (line[2] == 'y') {
-          target_yaw = line.substring(3).toDouble();
+        else if (line[2] == 'c') {
+          compass_target = line.substring(3).toDouble();
           Serial.print("Set target yaw rate: ");
-          Serial.println(target_yaw);
+          Serial.println(compass_target);
         }
         else {
           Esc_Bb.writeMicroseconds  (ESC_MID_MICROSEC);
           Esc_Stb.writeMicroseconds  (ESC_MID_MICROSEC);
           Serial.println("Engine stopped");
-          loop();  
         }
       }
     }
     else if (line[0] == 'c')
     {
-      if (line[1] == 'p')
+      if (line[1] == 's')
+      {
+        int value = line.substring(2).toInt();
+        value = max(value, -180);
+        value = min(value, 180);
+
+        compass_target = value;
+
+        Serial.print("Set compass: ");
+        Serial.print(value);
+        Serial.println("°");
+      }
+      else if (line[1] == 'p')
       {
         Serial.print("Compass: ");
-        Compass.read();
-        Serial.print((double)Compass.getAzimuth());
+        Serial.print(compass_value);
         Serial.println("°");
       }
       else if (line[1] == 'c')
@@ -128,9 +175,7 @@ class EngineCtrl
   Servo           Esc_Bb; 
   Servo           Esc_Stb;
   QMC5883LCompass Compass; 
-
-  double target_yaw   = 0.0;
-  double target_speed = 0.0;
+  
 
 
   void calibrate()

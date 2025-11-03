@@ -13,7 +13,6 @@
 
 #include "serial.h"
 //#include "wifi.h"
-#include <PID_v1.h>
 #include "winch.h"
 #include "engine.h"
 
@@ -37,18 +36,12 @@ WinchCtrl Winch;
 EngineCtrl Engine;
 
 
-
-// PID controller
-//PID PID_Rotation(&Compass_Value, &Ctrl_YawRate, &Compass_Target, PID_ROTATION_KP, PID_ROTATION_KI, PID_ROTATION_KD, DIRECT);
-//PID PID_Speed(&Speed_Value, &Speed_Value, &Speed_Target,PID_SPEED_KP, PID_SPEED_KI, PID_SPEED_KD, DIRECT);
-
-
 /* **************************************************************** */
 /* * Local Routines                                               * */
 /* **************************************************************** */ 
 void fillBroadcastBuffer()
 {
-  //sprintf(broadcastBuffer, "c:%d;y:%f\ntc%d", (int)Compass_Value, Ctrl_YawRate, (int)Compass_Target);
+  sprintf(broadcastBuffer, "sv:%f,st:%f,ss:%f,cv:%f,ct:%f,cs:%f", Engine.getSpeed(), Engine.getSpeedTarget(), Engine.getSpeedSet(), Engine.getCompass(), Engine.getCompassTarget(), Engine.getYawRateSet());
 }
 
 /* **************************************************************** */ 
@@ -93,13 +86,8 @@ void setup() {
 
   Serial_setup(SERIAL_BAUDRATE);
   //Wifi_setup(SECRET_SSID, SECRET_PASS);
+  Winch.setup();
   Engine.setup();
-
-  //PID_Rotation.SetMode(AUTOMATIC);
-  //PID_Rotation.SetOutputLimits(-PID_ROTATION_LIMIT, PID_ROTATION_LIMIT);
-
-  //PID_Speed.SetMode(AUTOMATIC);
-  //PID_Speed.SetOutputLimits(-PID_SPEED_LIMIT, PID_SPEED_LIMIT);
 }
 
 
@@ -107,17 +95,15 @@ void setup() {
 /* * Loop Routine                                                 * */
 /* **************************************************************** */ 
 void loop() {
-  //PID_Rotation.Compute();
-  //PID_Speed.Compute();
   Winch.loop();
   Engine.loop();
 
   //Wifi_loop();
   Serial_loop();
 
-  //fillBroadcastBuffer();
+  fillBroadcastBuffer();
   //Wifi_sendLine(broadcastBuffer);
-  //Serial_sendLine(broadcastBuffer);  
+  Serial_sendLine(broadcastBuffer);  
 
   if (Serial_lineReceived) {
     //Serial_sendLine((char*)Serial_lineData.c_str());

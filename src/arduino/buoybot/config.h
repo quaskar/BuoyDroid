@@ -6,16 +6,22 @@
 
 #define LOOP_DELAY        100
 
+#define ESC_STB_DIRECTION       1
+#define ESC_BB_DIRECTION        -1
 
-#define PID_ROTATION_KP     0.001
-#define PID_ROTATION_KI     0.001 //5
-#define PID_ROTATION_KD     0 //1
-#define PID_ROTATION_LIMIT  5
 
-#define PID_SPEED_KP        2
-#define PID_SPEED_KI        5
-#define PID_SPEED_KD        1
-#define PID_SPEED_LIMIT     85
+#define PID_ROTATION_KP         0.01
+#define PID_ROTATION_KI         1 //5
+#define PID_ROTATION_KD         0 //1
+#define PID_ROTATION_LIMIT      20
+#define PID_ROTATION_DIRECTION  1 /* 0:=Direct, 1:=Reverse */
+
+
+#define PID_SPEED_KP            0.1
+#define PID_SPEED_KI            2
+#define PID_SPEED_KD            0
+#define PID_SPEED_LIMIT         100
+#define PID_SPEED_DIRECTION     0 /* 0:=Direct, 1:=Reverse */
 
 
 /* Pin Config */
