@@ -1,10 +1,12 @@
 
-#define SERIAL_BAUDRATE     9600
+#define SERIAL_BAUDRATE         9600
 
-#define SECRET_SSID "4in1boot"
-#define SECRET_PASS "76148447002638943031"
+#define WIFI_SSID               "5in1boot"
+#define WIFI_PASS               "43227066422922795189"
+#define WIFI_DEST_IP            "192.168.0.100"
+#define WIFI_PORT               5001
 
-#define LOOP_DELAY        100
+#define LOOP_DELAY              100
 
 #define ESC_STB_DIRECTION       1
 #define ESC_BB_DIRECTION        -1

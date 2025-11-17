@@ -12,7 +12,7 @@
  */
 
 #include "serial.h"
-//#include "wifi.h"
+#include "wifi.h"
 #include "winch.h"
 #include "engine.h"
 
@@ -85,7 +85,7 @@ void parse_commandLine(String line) {
 void setup() {
 
   Serial_setup(SERIAL_BAUDRATE);
-  //Wifi_setup(SECRET_SSID, SECRET_PASS);
+  Wifi_setup(WIFI_SSID, WIFI_PASS);
   Winch.setup();
   Engine.setup();
 }
@@ -98,12 +98,12 @@ void loop() {
   Winch.loop();
   Engine.loop();
 
-  //Wifi_loop();
-  Serial_loop();
+  Wifi_loop();
+  //Serial_loop();
 
   fillBroadcastBuffer();
   //Wifi_sendLine(broadcastBuffer);
-  Serial_sendLine(broadcastBuffer);  
+  //Serial_sendLine(broadcastBuffer);  
 
   if (Serial_lineReceived) {
     //Serial_sendLine((char*)Serial_lineData.c_str());
