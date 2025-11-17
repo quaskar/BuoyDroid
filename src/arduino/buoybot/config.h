@@ -1,8 +1,7 @@
 
 #define SERIAL_BAUDRATE         9600
 
-#define WIFI_SSID               "5in1boot"
-#define WIFI_PASS               "43227066422922795189"
+#include "config_wifi.h"
 #define WIFI_DEST_IP            "192.168.0.100"
 #define WIFI_PORT               5001
 
