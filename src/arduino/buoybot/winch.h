@@ -16,6 +16,12 @@ class WinchCtrl
     Winch_Motor.stop();
   };
 
+  /* setup */
+  void setup()
+  {
+
+  };
+
   /* loop */
   void loop()
   {

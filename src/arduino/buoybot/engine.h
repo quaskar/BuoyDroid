@@ -56,7 +56,8 @@ class EngineCtrl
     PID_Speed.SetTunings(PID_SPEED_KP, PID_SPEED_KI, PID_SPEED_KD);
     PID_Speed.SetControllerDirection(PID_SPEED_DIRECTION);
     
-    compass_target  = 0.0;
+    Compass.read();
+    compass_target  = (double)Compass.getAzimuth();
     speed_target    = 0.0;
   }
 
