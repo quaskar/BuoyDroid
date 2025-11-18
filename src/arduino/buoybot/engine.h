@@ -5,10 +5,19 @@
 #include <QMC5883LCompass.h>
 #include <PID_v1.h>
 #include "config.h"
+#include "logging.h"
 
 #define ESC_MIN_MICROSEC    1000
 #define ESC_MAX_MICROSEC    2001
 #define ESC_MID_MICROSEC    (ESC_MAX_MICROSEC-ESC_MIN_MICROSEC) / 2 + ESC_MIN_MICROSEC
+
+int signal_idx_compass_value;
+int signal_idx_compass_target;
+int signal_idx_yawrate_set;
+
+int signal_idx_speed_value;
+int signal_idx_speed_target;
+int signal_idx_speed_set;
 
 
 double compass_value  = 0.0;
@@ -59,6 +68,15 @@ class EngineCtrl
     Compass.read();
     compass_target  = (double)Compass.getAzimuth();
     speed_target    = 0.0;
+
+    /* register logging of signals */
+    signal_idx_speed_value = registerSignal("Speed", LOGGING_TYPE_FLOAT64);
+    signal_idx_speed_target = registerSignal("Speed_Target", LOGGING_TYPE_FLOAT64);
+    signal_idx_speed_set = registerSignal("Speed_Set", LOGGING_TYPE_FLOAT64);
+
+    signal_idx_compass_value = registerSignal("Compass", LOGGING_TYPE_FLOAT64);
+    signal_idx_compass_target = registerSignal("Compass_Target", LOGGING_TYPE_FLOAT64);
+    signal_idx_yawrate_set = registerSignal("Yaw_Rate", LOGGING_TYPE_FLOAT64);    
   }
 
   /* loop */
@@ -75,6 +93,15 @@ class EngineCtrl
     int v_Stb = map(speed_set - yawrate_set, -ESC_STB_DIRECTION*100, ESC_STB_DIRECTION*100, ESC_MIN_MICROSEC, ESC_MAX_MICROSEC);
     Esc_Bb.writeMicroseconds  (v_Bb);
     Esc_Stb.writeMicroseconds  (v_Stb);
+
+    /* set signal values for logging */
+    setSignal (signal_idx_speed_value, &speed_value);
+    setSignal (signal_idx_speed_target, &speed_target);
+    setSignal (signal_idx_speed_set, &speed_set);
+
+    setSignal (signal_idx_compass_value, &compass_value);
+    setSignal (signal_idx_compass_target, &compass_target);
+    setSignal (signal_idx_yawrate_set, &yawrate_set);
   };
 
   double getSpeed() {return speed_value; };

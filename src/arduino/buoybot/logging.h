@@ -5,38 +5,35 @@
 #include <WiFiUdp.h>
 #include "config.h"
 
-#define     NUMBER_SIGNAL_MAX       32
+#define SIGNAL_MAX_NUMBER       32
+
+#define LOGGING_TYPE_UINT8      'B'
+#define LOGGING_TYPE_INT8       'b'
+#define LOGGING_TYPE_UINT16     'H'
+#define LOGGING_TYPE_INT16      'h'
+#define LOGGING_TYPE_UINT32     'I'
+#define LOGGING_TYPE_INT32      'i'
+#define LOGGING_TYPE_UINT64     'Q'
+#define LOGGING_TYPE_INT64      'q'
+#define LOGGING_TYPE_FLOAT32    'f'
+#define LOGGING_TYPE_FLOAT64    'd'
 
 
-
-enum eSignalType {
-    UINT8   = 0,
-    SINT8   = 1,
-    UINT16  = 2,
-    SINT16  = 3,
-    UINT32  = 4,
-    SINT32  = 5,
-    UINT64  = 6,
-    SINT64  = 7,
-    FLOAT32 = 8,
-    FLOAT64 = 9,
-};
-
-int signalSizeOf (eSignalType type)
+int signalSizeOf (char c)
 {
-    switch (type)
+    switch (c)
     {
-    case UINT8:     return sizeof(unsigned char);   break;
-    case SINT8:     return sizeof(signed char);     break;
-    case UINT16:    return sizeof(unsigned short);  break;
-    case SINT16:    return sizeof(signed short);    break;
-    case UINT32:    return sizeof(unsigned int);    break;
-    case SINT32:    return sizeof(signed int);      break;
-    case UINT64:    return sizeof(unsigned long);   break;
-    case SINT64:    return sizeof(signed long);     break;
-    case FLOAT32:   return sizeof(float);           break;
-    case FLOAT64:   return sizeof(double);          break;
-    default:        return -1;                      break;
+    case LOGGING_TYPE_UINT8:    return sizeof(unsigned char);   break;
+    case LOGGING_TYPE_INT8:     return sizeof(signed char);     break;
+    case LOGGING_TYPE_UINT16:   return sizeof(unsigned short);  break;
+    case LOGGING_TYPE_INT16:    return sizeof(signed short);    break;
+    case LOGGING_TYPE_UINT32:   return sizeof(unsigned int);    break;
+    case LOGGING_TYPE_INT32:    return sizeof(signed int);      break;
+    case LOGGING_TYPE_UINT64:   return sizeof(unsigned long);   break;
+    case LOGGING_TYPE_INT64:    return sizeof(signed long);     break;
+    case LOGGING_TYPE_FLOAT32:  return sizeof(float);           break;
+    case LOGGING_TYPE_FLOAT64:  return sizeof(double);          break;
+    default:                    return -1;                      break;
     }
 
     return -1;
@@ -46,38 +43,38 @@ int signalSizeOf (eSignalType type)
 /* **************************************************************** */
 /* * Global Variables                                             * */
 /* **************************************************************** */ 
-unsigned int    SignalMax = 0
-String          SignalNames[NUMBER_SIGNAL_MAX];
-eSignalType     SignalTypes[NUMBER_SIGNAL_MAX];
-unsigned int    SignalTypesOffset[NUMBER_SIGNAL_MAX];
-
-char            SignalBuffer[NUMBER_SIGNAL_MAX*8];
+unsigned int    SignalNum = 0;
+String          SignalNameList;
+String          SignalStructStr;
+unsigned int    SignalOffset[SIGNAL_MAX_NUMBER];
+char            SignalBuffer[SIGNAL_MAX_NUMBER*8];
 
 WiFiUDP udp;
 
 
 
-int registerSignal (String name, eSignalType type)
+int registerSignal (String name, char type)
 {
     /* check for maximum number of signals reached */
-    if (SignalMax >= NUMBER_SIGNAL_MAX)
+    if (SignalNum >= SIGNAL_MAX_NUMBER)
         return -1;
     
-    SignalNames[SignalMax]          = name;
-    SignalTypes[SignalMax]          = type;
-    if (SignalMax == 0)
-        SignalTypesOffset[SignalMax]= 0;
-    else
-        SignalTypesOffset[SignalMax]= SignalTypesOffset[SignalMax-1] + signalSizeOf(type);   
+    SignalNameList = SignalNameList + "," + name;
+    SignalStructStr += type;
 
-    SignalMax = SignalMax + 1;
-    return SignalMax;
+    if (SignalNum == 0)
+        SignalOffset[SignalNum]= 0;
+    else
+        SignalOffset[SignalNum]= SignalOffset[SignalNum-1] + signalSizeOf(SignalStructStr[SignalNum-1]);   
+
+    SignalNum = SignalNum + 1;
+    return SignalNum - 1;
 };
 
 
-void setSignal (int signalIdx, char *value)
+void setSignal (int signalIdx, void *value)
 {
-    memcpy (&SignalBuffer[SignalTypesOffset[signalIdx]], value, signalSizeOf(SignalTypes[signalIdx]);
+    memcpy (&SignalBuffer[SignalOffset[signalIdx]], value, signalSizeOf(SignalStructStr[signalIdx]));
 }
 
 
@@ -108,15 +105,37 @@ void Logging_setup ()
     udp.begin(WIFI_PORT);
 }
 
+void Logging_announce ()
+{
+    /* send names of signals */
+    udp.beginPacket(WIFI_DEST_IP, WIFI_PORT);
+    udp.write(SignalNameList.c_str());
+    udp.write("|<");
+    udp.write(SignalStructStr.c_str());
+    udp.endPacket();
+
+    Serial.println("Registered Signals");
+    Serial.println("------------------");
+    Serial.println(SignalNameList);
+    Serial.println(SignalStructStr);
+    for (int i=0 ; i<SignalNum ; i++)
+    {
+        Serial.print(SignalOffset[i]);
+        Serial.print(",");
+    }
+    Serial.println("");
+}
+
 
 /* **************************************************************** */
 /* * Loop Routine                                                 * */
 /* **************************************************************** */ 
-void Wifi_loop() {
+void Logging_loop() {
   // UDP-Paket an Multicast-Gruppe senden
   udp.beginPacket(WIFI_DEST_IP, WIFI_PORT);
-  udp.write(SignalBuffer, SignalTypesOffset[SignalMax-1])
+  udp.write(SignalBuffer, SignalOffset[SignalNum-1] + signalSizeOf(SignalStructStr[SignalNum-1]));
   udp.endPacket();
+  Serial.println(SignalOffset[SignalNum-1] + signalSizeOf(SignalStructStr[SignalNum-1]));
 }
 
 

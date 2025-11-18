@@ -12,11 +12,12 @@
  */
 
 #include "serial.h"
-#include "wifi.h"
+//#include "wifi.h"
 #include "winch.h"
 #include "engine.h"
 
 #include "config.h"
+#include "logging.h"
 
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 0
@@ -85,9 +86,13 @@ void parse_commandLine(String line) {
 void setup() {
 
   Serial_setup(SERIAL_BAUDRATE);
-  Wifi_setup(WIFI_SSID, WIFI_PASS);
+  //Wifi_setup(WIFI_SSID, WIFI_PASS);
+  Logging_setup();
+
   Winch.setup();
   Engine.setup();
+
+  Logging_announce();
 }
 
 
@@ -98,8 +103,9 @@ void loop() {
   Winch.loop();
   Engine.loop();
 
-  Wifi_loop();
+  //Wifi_loop();
   //Serial_loop();
+  Logging_loop();
 
   fillBroadcastBuffer();
   //Wifi_sendLine(broadcastBuffer);
