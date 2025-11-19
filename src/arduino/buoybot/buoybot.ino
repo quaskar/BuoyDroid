@@ -104,10 +104,10 @@ void loop() {
   Engine.loop();
 
   //Wifi_loop();
-  //Serial_loop();
+  Serial_loop();
   Logging_loop();
 
-  fillBroadcastBuffer();
+  //fillBroadcastBuffer();
   //Wifi_sendLine(broadcastBuffer);
   //Serial_sendLine(broadcastBuffer);  
 

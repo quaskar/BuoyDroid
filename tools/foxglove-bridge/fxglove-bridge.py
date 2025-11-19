@@ -10,37 +10,53 @@ sock.bind(("0.0.0.0", 5001))
 
 print("Warte auf UDP...")
 
-data, addr = sock.recvfrom(1024)
-print(f"{addr}: {data.decode()}")
-DecodeStr = data.decode().split('|')[1]
-Names = data.decode().split('|')[0].split(',')[1:]
+SignalDecodeStr = ""
+SignalNames = []
 
-print (DecodeStr)
-print(Names)
-
-server = foxglove.start_server()
-
-
-# create channels 
+foxglove.start_server()
 BouyBotChannel = Channel("/bouybot", message_encoding="json")
 
-i = 0
 while True:
+    
+    # Read from socket
     data, addr = sock.recvfrom(1024)
-    print(len(data))
-    print(unpack(DecodeStr, data))
 
-    #foxglove.log(
-    #    "/hello",
-    #    Log(
-    #        timestamp=Timestamp.now(),
-    #        level=LogLevel.Info,
-    #        message="Hallo",
-    #    )
-    #)
+    # skip if messag eis too small
+    if len(data) < 4:
+        continue
 
-    Values = unpack(DecodeStr, data)
-    data = {}
-    for i in range(0,len(Names)):
-        data[Names[i]] = Values[i]
-    BouyBotChannel.log(data)
+    # decode message id and magic number
+    (MagicNum, MessageId) = unpack('<HH', data[0:4])
+    Data = data[4:]
+
+    if MagicNum == 1375:
+
+        # Logging 
+        if MessageId == 0:
+            foxglove.log("/log", Log(timestamp=Timestamp.now(), level=LogLevel.Info, message=Data.decode(),))
+
+        # Signal Announcement
+        elif MessageId == 1:
+            print (Data.decode())
+
+            SignalDecodeStr = Data.decode().split('|')[1]
+            SignalDecodeStr = SignalDecodeStr[0] + SignalDecodeStr[3:]
+            SignalNames = Data.decode().split('|')[0].split(',')[3:]
+
+            print (SignalNames)
+            print (SignalDecodeStr)
+
+        # Signal Data 
+        elif MessageId == 2:
+
+            if len(SignalDecodeStr) <= 0:
+                   continue
+
+            Values = unpack(SignalDecodeStr, Data)
+            SignalData = {}
+            for i in range(0,len(SignalNames)):
+                SignalData[SignalNames[i]] = Values[i]
+            BouyBotChannel.log(SignalData)
+
+        else:
+            pass

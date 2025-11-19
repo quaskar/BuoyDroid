@@ -77,6 +77,17 @@ void setSignal (int signalIdx, void *value)
     memcpy (&SignalBuffer[SignalOffset[signalIdx]], value, signalSizeOf(SignalStructStr[signalIdx]));
 }
 
+void Logging_Text (char text[])
+{
+    /* send names of signals */
+    SignalUdp.beginPacket(WIFI_DEST_IP, WIFI_PORT);
+    unsigned short i = 1375;
+    SignalUdp.write((char*)&i, 2);
+    i = 0;
+    SignalUdp.write((char*)&i, 2);
+    SignalUdp.write(text);
+    SignalUdp.endPacket();
+}
 
 /* **************************************************************** */
 /* * Setup Routine                                                * */
@@ -106,17 +117,22 @@ void Logging_setup ()
     
     registerSignal("MagicNum", LOGGING_TYPE_UINT16);
     registerSignal("MessageId", LOGGING_TYPE_UINT16);
-    i = 1375
-    setSignal (0, &i);
-    i = 1
-    setSignal (1, &i);
+    unsigned short i = 1375;
+    setSignal (0, (char*)&i);
+    i = 2;
+    setSignal (1, (char*)&i);
+
+    Logging_Text("test");
 }
 
 void Logging_announce ()
 {
     /* send names of signals */
     SignalUdp.beginPacket(WIFI_DEST_IP, WIFI_PORT);
-
+    unsigned short i = 1375;
+    SignalUdp.write((char*)&i, 2);
+    i = 1;
+    SignalUdp.write((char*)&i, 2);
     SignalUdp.write(SignalNameList.c_str());
     SignalUdp.write("|<");
     SignalUdp.write(SignalStructStr.c_str());
