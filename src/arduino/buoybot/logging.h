@@ -47,9 +47,9 @@ unsigned int    SignalNum = 0;
 String          SignalNameList;
 String          SignalStructStr;
 unsigned int    SignalOffset[SIGNAL_MAX_NUMBER];
-char            SignalBuffer[SIGNAL_MAX_NUMBER*8];
+char            SignalBuffer[SIGNAL_MAX_NUMBER*8+4];
 
-WiFiUDP udp;
+WiFiUDP         SignalUdp;
 
 
 
@@ -102,28 +102,25 @@ void Logging_setup ()
     Serial.println(WiFi.localIP());
 
     // UDP starten (optional; für Sender nicht zwingend erforderlich)
-    udp.begin(WIFI_PORT);
+    SignalUdp.begin(WIFI_PORT);
+    
+    registerSignal("MagicNum", LOGGING_TYPE_UINT16);
+    registerSignal("MessageId", LOGGING_TYPE_UINT16);
+    i = 1375
+    setSignal (0, &i);
+    i = 1
+    setSignal (1, &i);
 }
 
 void Logging_announce ()
 {
     /* send names of signals */
-    udp.beginPacket(WIFI_DEST_IP, WIFI_PORT);
-    udp.write(SignalNameList.c_str());
-    udp.write("|<");
-    udp.write(SignalStructStr.c_str());
-    udp.endPacket();
+    SignalUdp.beginPacket(WIFI_DEST_IP, WIFI_PORT);
 
-    Serial.println("Registered Signals");
-    Serial.println("------------------");
-    Serial.println(SignalNameList);
-    Serial.println(SignalStructStr);
-    for (int i=0 ; i<SignalNum ; i++)
-    {
-        Serial.print(SignalOffset[i]);
-        Serial.print(",");
-    }
-    Serial.println("");
+    SignalUdp.write(SignalNameList.c_str());
+    SignalUdp.write("|<");
+    SignalUdp.write(SignalStructStr.c_str());
+    SignalUdp.endPacket();
 }
 
 
@@ -132,10 +129,9 @@ void Logging_announce ()
 /* **************************************************************** */ 
 void Logging_loop() {
   // UDP-Paket an Multicast-Gruppe senden
-  udp.beginPacket(WIFI_DEST_IP, WIFI_PORT);
-  udp.write(SignalBuffer, SignalOffset[SignalNum-1] + signalSizeOf(SignalStructStr[SignalNum-1]));
-  udp.endPacket();
-  Serial.println(SignalOffset[SignalNum-1] + signalSizeOf(SignalStructStr[SignalNum-1]));
+  SignalUdp.beginPacket(WIFI_DEST_IP, WIFI_PORT);
+  SignalUdp.write(SignalBuffer, SignalOffset[SignalNum-1] + signalSizeOf(SignalStructStr[SignalNum-1]));
+  SignalUdp.endPacket();
 }
 
 
